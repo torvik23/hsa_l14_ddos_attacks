@@ -1,0 +1,102 @@
+version: '3.8'
+
+networks:
+  backend_subnetwork:
+    ipam:
+      driver: ${NETWORKS_DRIVER}
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1
+volumes:
+  influxdb:
+    driver: ${VOLUMES_DRIVER}
+services:
+  attacker:
+    build: ./docker/blackarch
+    container_name: attacker
+    networks:
+      backend_subnetwork:
+        ipv4_address: 172.16.238.10
+  #Defender without DDoS protection
+  defender-0:
+    build: ./docker/nginx
+    container_name: defender-0
+    restart: always
+    volumes:
+      - ./docker/nginx/nginx.default.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/sites-available/default.conf:/etc/nginx/sites-available/default.conf
+      - ./docker/nginx/website:/var/www/html
+      - ./volume/logs/defender-0:/var/log/nginx
+    ports:
+      - "${DEFENDER_0_HTTP_PORT}:80"
+    networks:
+      backend_subnetwork:
+        ipv4_address: 172.16.238.20
+  #Defender with DDoS protection
+  defender-1:
+    build: ./docker/nginx
+    container_name: defender-1
+    restart: always
+    environment:
+      - TWEAK_IPTABLES=true
+    volumes:
+      - ./docker/nginx/nginx.protected.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/sites-available/protected.conf:/etc/nginx/sites-available/default.conf
+      - ./docker/nginx/website:/var/www/html
+      - ./volume/logs/defender-1:/var/log/nginx
+    ports:
+      - "${DEFENDER_1_HTTP_PORT}:80"
+    networks:
+      backend_subnetwork:
+        ipv4_address: 172.16.238.30
+  influxdb:
+    image: influxdb:1.8-alpine
+    container_name: influxdb
+    env_file:
+      - ./docker/influxdb/configuration.env
+    ports:
+      - '${INFLUXDB_PORT}:8086'
+    volumes:
+      - ./volume/data/influxdb/data:/var/lib/influxdb2:rw
+    networks:
+      backend_subnetwork:
+        ipv4_address: 172.16.238.40
+  telegraf:
+    image: telegraf:1.20.1-alpine
+    container_name: telegraf
+    user: '0'
+    privileged: true
+    volumes:
+      - ./docker/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - '${TELEGRAF_PORT}:8125/udp'
+    links:
+      - influxdb
+      - defender-0
+      - defender-1
+    depends_on:
+      - influxdb
+      - defender-0
+      - defender-1
+    networks:
+      backend_subnetwork:
+        ipv4_address: 172.16.238.50
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    env_file:
+      - ./docker/grafana/configuration.env
+    links:
+      - influxdb
+    depends_on:
+      - influxdb
+    volumes:
+      - ./volume/data/grafana:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      backend_subnetwork:
+        ipv4_address: 172.16.238.60
