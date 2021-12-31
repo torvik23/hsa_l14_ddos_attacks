@@ -32,6 +32,9 @@ $ hping -c 100000 -d 128 -w 64 --flood --rand-source --udp -p 8080 defender-0
 --- defender-0 hping statistic ---
 2916410 packets tramitted, 0 packets received, 100% packet loss
 round-trip min/avg/max = 0.0/0.0/0.0 ms
+
+$ curl -Is localhost:8080 | head -1
+HTTP/1.1 200 OK
 ```
 #### With DDoS protection:
 ```bash
@@ -40,6 +43,9 @@ $ hping -c 100000 -d 128 -w 64 --flood --rand-source --udp -p 8081 defender-1
 --- defender-1 hping statistic ---
 2785135 packets tramitted, 0 packets received, 100% packet loss
 round-trip min/avg/max = 0.0/0.0/0.0 ms
+
+$ curl -Is localhost:8081 | head -1
+HTTP/1.1 200 OK
 ```
 
 ### ICMP flood
@@ -50,6 +56,9 @@ $ hping defender-0 -c 1000 -d 128 -n -p 8080 --icmp --flood --rand-source
 --- defender-0 hping statistic ---
 1048299 packets tramitted, 0 packets received, 100% packet loss
 round-trip min/avg/max = 0.0/0.0/0.0 ms
+
+$ curl -Is localhost:8080 | head -1
+HTTP/1.1 200 OK
 ```
 #### With DDoS protection:
 ```bash
@@ -58,6 +67,9 @@ $ hping defender-1 -c 1000 -d 128 -n -p 8081 --icmp --flood --rand-source
 --- defender-1 hping statistic ---
 893003 packets tramitted, 0 packets received, 100% packet loss
 round-trip min/avg/max = 0.0/0.0/0.0 ms
+
+$ curl -Is localhost:8081 | head -1
+HTTP/1.1 200 OK
 ```
 
 ### HTTP flood
@@ -110,6 +122,9 @@ connected:           162
 error:               0
 closed:              838
 service available:   YES
+
+$ curl -Is localhost:8081 | head -1
+HTTP/1.1 200 OK
 ```
 
 ### SYN flood
@@ -120,6 +135,9 @@ $ hping defender-0 -p 8080 -c 1000 -d 128 -S -n --flood --rand-source
 --- defender-0 hping statistic ---
 2741951 packets tramitted, 0 packets received, 100% packet loss
 round-trip min/avg/max = 0.0/0.0/0.0 ms
+
+$ curl -Is localhost:8080 | head -1
+HTTP/1.1 200 OK
 ```
 #### With DDoS protection:
 ```bash
@@ -128,6 +146,9 @@ $ hping defender-1 -p 8081 -c 1000 -d 128 -S -n --flood --rand-source
 --- defender-1 hping statistic ---
 2002331 packets tramitted, 0 packets received, 100% packet loss
 round-trip min/avg/max = 0.0/0.0/0.0 ms
+
+$ curl -Is localhost:8081 | head -1
+HTTP/1.1 200 OK
 ```
 
 ### Ping of Death
@@ -137,6 +158,9 @@ $ ping 172.16.238.20 -s 65488 -t 1 -n 1
 
 --- 1 ping statistics ---
 117 packets transmitted, 0 received, 100% packet loss, time 118789ms
+
+$ curl -Is localhost:8080 | head -1
+HTTP/1.1 200 OK
 ```
 #### With DDoS protection:
 ```bash
@@ -144,4 +168,7 @@ $ ping 172.16.238.30 -s 65488 -t 1 -n 1
 
 --- 1 ping statistics ---
 200 packets transmitted, 0 received, 100% packet loss, time 162399ms
+
+$ curl -Is localhost:8081 | head -1
+HTTP/1.1 200 OK
 ```
