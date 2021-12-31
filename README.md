@@ -77,6 +77,8 @@ HTTP/1.1 200 OK
 ```bash
 $ siege -b -c 500 -t 1m defender-0
 
+$ curl -XGET localhost:8080
+curl: (52) Empty reply from server
 ```
 #### With DDoS protection:
 ```bash
